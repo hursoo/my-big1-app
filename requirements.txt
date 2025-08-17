@@ -12,7 +12,6 @@ Jinja2==3.1.6
 jsonschema==4.25.0
 jsonschema-specifications==2025.4.1
 MarkupSafe==3.0.2
-matplotlib
 narwhals==2.1.2
 numpy==1.26.4
 packaging==25.0
@@ -37,3 +36,4 @@ typing_extensions==4.14.1
 tzdata==2025.2
 urllib3==2.5.0
 watchdog==6.0.0
+matplotlib
