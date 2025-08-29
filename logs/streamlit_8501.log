@@ -19,3 +19,4 @@ Traceback (most recent call last):
     "저는 사과 좋아요
     ^
 SyntaxError: unterminated string literal (detected at line 90)
+  Stopping...
