@@ -14,7 +14,7 @@ def show(df_input):
     if 'sents_df' not in st.session_state: st.session_state.sents_df = None
     if 'tokenized_df' not in st.session_state: st.session_state.tokenized_df = None
     if 'final_df' not in st.session_state: st.session_state.final_df = None
-    if 'target_tags' not in st.session_state: st.session_state.target_tags = ['SH', 'NP', 'NNP']
+    if 'target_tags' not in st.session_state: st.session_state.target_tags = ['SH', 'NP', 'NNP', 'NNG']
 
     # --- 1. 초기 데이터 및 열 선택 ---
     with st.expander("1. 전처리 대상 데이터 확인 및 열 선택", expanded=True):
@@ -88,7 +88,7 @@ def show(df_input):
             st.rerun()
 
     if st.session_state.final_df is not None:
-        with st.expander("4. 최종 결과 확인 및 다운로드", expanded=True):
+        with st.expander("4. 최종 결과 확인 및 다운로드 (-> **morph열**)", expanded=True):
             st.dataframe(st.session_state.final_df.head(), use_container_width=True)
             st.info(f"최종 {len(st.session_state.final_df)}개의 전처리된 문장이 생성되었습니다.")
             from components.data_merger import convert_df_to_csv

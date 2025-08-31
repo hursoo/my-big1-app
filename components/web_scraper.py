@@ -21,11 +21,18 @@ def get_contents(urls, n):
         try:
             webpage = urlopen(url, context=ctx)
             r_id = url[-16:]
-            bsobj = BeautifulSoup(webpage.read(), 'lxml')
-            List1 = bsobj.find_all('div', {'id': 'cont_view'})
-            for z in List1:
-                z1 = z.get_text('\n', strip=True)
-                results.append([r_id, z1])
+
+            # --- ✨ [수정] 'lxml' 대신 파이썬 기본 파서 'html.parser' 사용 ---
+            bsobj = BeautifulSoup(webpage.read(), 'html.parser')
+            
+            content_div = bsobj.find('div', {'id': 'cont_view'})
+            
+            if content_div:
+                text_content = content_div.get_text('\n', strip=True)
+                results.append([r_id, text_content])
+            else:
+                st.warning(f"'{url}'에서 콘텐츠 div('cont_view')를 찾지 못했습니다. 이 URL은 건너뜁니다.")
+                
         except Exception as e:
             st.warning(f"{url} 스크래핑 중 오류 발생: {e}")
             continue
@@ -37,13 +44,15 @@ def get_contents(urls, n):
 
 def show():
     st.header("자료 불러오기 및 스크래핑")
-    st.info("논설 정보 엑셀 파일과 기사 정보 텍스트 파일을 업로드하여 스크래핑을 시작하세요.")
+    st.info("논설 정보 엑셀 파일(**gb_data_2.1.xlsx**)과 기사 정보 텍스트 파일(**근현대잡지자료_20250315172708.txt**)을 업로드하여 스크래핑을 시작하세요.")
 
-    # --- 1. 파일 업로드 UI (항상 표시) ---
     col1, col2 = st.columns(2)
+    # ron_info_df와 gisa_info_df를 None으로 초기화
     ron_info_df = None
+    gisa_info_df = None
+
     with col1:
-        excel_file = st.file_uploader("논설 정보(`ron_info` 시트 포함) 엑셀 파일", type=['xlsx', 'xls'])
+        excel_file = st.file_uploader("논설 정보(`ron_info` 시트 포함) 엑셀 파일", type=['xlsx', 'xls'], key="ws_excel_uploader")
         if excel_file:
             try:
                 xls = pd.ExcelFile(excel_file)
@@ -56,7 +65,7 @@ def show():
                 st.error(f"엑셀 파일 처리 중 오류: {e}")
 
     with col2:
-        gisa_file = st.file_uploader("기사 정보(`...txt`) 파일", type="txt")
+        gisa_file = st.file_uploader("기사 정보(`...txt`) 파일", type="txt", key="ws_gisa_uploader")
         if gisa_file:
             try:
                 gisa_info_df = pd.read_csv(gisa_file, sep='^', encoding='utf-8')
@@ -64,29 +73,31 @@ def show():
             except Exception as e:
                 st.error(f"텍스트 파일 처리 중 오류: {e}")
 
-    # --- 2. 스크래핑 실행 UI (엑셀 로드 시 항상 표시) ---
     if ron_info_df is not None:
         st.divider()
         st.subheader("스크래핑 실행")
         urls = ron_info_df['url'].tolist()
-        num_to_scrape = st.slider("스크래핑할 논설 개수", 1, len(urls), min(10, len(urls)))
+        num_to_scrape = st.slider("스크래핑할 논설 개수", 1, len(urls), min(10, len(urls)), key="ws_slider")
 
-        if st.button("웹 스크래핑 및 데이터 결합 시작", type="primary"):
-            if gisa_file is None:
+        if st.button("웹 스크래핑 및 데이터 결합 시작", type="primary", key="ws_start_button"):
+            if gisa_info_df is None:
                 st.error("기사 정보(txt) 파일도 함께 업로드해야 합니다.")
             else:
                 with st.spinner("작업을 처리 중입니다..."):
-                    # 스크래핑 및 결합 로직
                     contents_df = get_contents(urls, num_to_scrape)
-                    r334_info1 = ron_info_df.drop('r_id', axis=1, errors='ignore')
-                    combi_df = pd.merge(r334_info1, contents_df, left_on='r_id_raw', right_on='r_id', how='inner')
-                    combi_df1 = combi_df[['r_id', 'r_id_raw', 'title', 'writer', 'gisa_class', 'date', 'url', 'year', 'content']]
-                    # 결과를 세션 상태에 저장
-                    st.session_state.scraped_df = combi_df1
+                    
+                    if not contents_df.empty and 'r_id_raw' in ron_info_df.columns:
+                        r334_info1 = ron_info_df.drop('r_id', axis=1, errors='ignore')
+                        combi_df = pd.merge(r334_info1, contents_df, left_on='r_id_raw', right_on='r_id', how='inner')
+                        combi_df1 = combi_df[['r_id', 'r_id_raw', 'title', 'writer', 'gisa_class', 'date', 'url', 'year', 'content']]
+                        st.session_state.scraped_df = combi_df1
+                    elif contents_df.empty:
+                        st.warning("스크래핑된 콘텐츠가 없습니다. URL을 확인하거나 다른 방법으로 진행해주세요.")
+                    else:
+                        st.error("'ron_info_df'에 'r_id_raw' 열이 없습니다. 엑셀 파일을 확인해주세요.")
     
     st.divider()
 
-    # --- 3. 결과 표시 UI (세션에 결과가 있을 때 항상 표시) ---
     if 'scraped_df' in st.session_state and st.session_state.scraped_df is not None:
         st.subheader("작업 결과")
         st.success("스크래핑 및 결합 작업이 완료되었습니다.")
@@ -96,11 +107,15 @@ def show():
         st.download_button(
             "결과 다운로드 (Excel)",
             excel_data,
-            'scraped_data.xlsx',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            'ron10_data.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            key="ws_download_button"
         )
+        st.markdown("""
+        그냥 저장하면 ron10_data.xlsx 이름으로 저장됩니다. -> 다음 **텍스트 전처리 탭**에서 활용 예정
+        """)
         
-        # 결과물을 지우고 다시 시작할 수 있는 리셋 버튼
-        if st.button("🔄 결과 지우고 새로 시작하기"):
-            del st.session_state.scraped_df
+        if st.button("🔄 결과 지우고 새로 시작하기", key="ws_reset_button"):
+            if 'scraped_df' in st.session_state:
+                del st.session_state.scraped_df
             st.rerun()
