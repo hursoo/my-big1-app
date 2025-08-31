@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import ssl
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 import io
 
@@ -16,38 +16,46 @@ def get_contents(urls, n):
     results = []
     progress_bar = st.progress(0, text="스크래핑 진행 중...")
     ctx = ssl._create_unverified_context()
+    # 일부 웹사이트의 접근 거부를 피하기 위한 헤더 정보
+    headers = {'User-Agent': 'Mozilla/5.0'}
 
     for i, url in enumerate(urls[:n]):
         try:
-            webpage = urlopen(url, context=ctx)
+            # 헤더를 포함하여 요청(Request) 객체를 생성
+            req = Request(url, headers=headers)
+            webpage = urlopen(req, context=ctx)
+            
             r_id = url[-16:]
-
-            # --- ✨ [수정] 'lxml' 대신 파이썬 기본 파서 'html.parser' 사용 ---
+            
+            # 파이썬 기본 파서 'html.parser' 사용
             bsobj = BeautifulSoup(webpage.read(), 'html.parser')
             
+            # id가 'cont_view'인 div를 찾음
             content_div = bsobj.find('div', {'id': 'cont_view'})
             
+            # div를 실제로 찾았는지 확인 (가장 중요한 안전장치)
             if content_div:
                 text_content = content_div.get_text('\n', strip=True)
                 results.append([r_id, text_content])
             else:
-                st.warning(f"'{url}'에서 콘텐츠 div('cont_view')를 찾지 못했습니다. 이 URL은 건너뜁니다.")
+                st.warning(f"'{url}'에서 콘텐츠 영역('cont_view')을 찾지 못했습니다. 이 URL은 건너뜁니다.")
                 
         except Exception as e:
-            st.warning(f"{url} 스크래핑 중 오류 발생: {e}")
+            st.warning(f"'{url}' 스크래핑 중 오류 발생: {e}")
             continue
         
         progress_bar.progress((i + 1) / n, text=f"스크래핑 진행 중... ({i+1}/{n})")
     
     progress_bar.empty()
+    if not results:
+        return pd.DataFrame() # 결과가 없으면 빈 데이터프레임 반환
     return pd.DataFrame(results, columns=['r_id', 'content'])
 
 def show():
     st.header("자료 불러오기 및 스크래핑")
-    st.info("논설 정보 엑셀 파일(**gb_data_2.1.xlsx**)과 기사 정보 텍스트 파일(**근현대잡지자료_20250315172708.txt**)을 업로드하여 스크래핑을 시작하세요.")
+    st.info("논설 정보 엑셀 파일과 기사 정보 텍스트 파일을 업로드하여 스크래핑을 시작하세요.")
 
     col1, col2 = st.columns(2)
-    # ron_info_df와 gisa_info_df를 None으로 초기화
     ron_info_df = None
     gisa_info_df = None
 
@@ -107,15 +115,13 @@ def show():
         st.download_button(
             "결과 다운로드 (Excel)",
             excel_data,
-            'ron10_data.xlsx',
+            'scraped_data.xlsx',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             key="ws_download_button"
         )
-        st.markdown("""
-        그냥 저장하면 ron10_data.xlsx 이름으로 저장됩니다. -> 다음 **텍스트 전처리 탭**에서 활용 예정
-        """)
         
         if st.button("🔄 결과 지우고 새로 시작하기", key="ws_reset_button"):
             if 'scraped_df' in st.session_state:
                 del st.session_state.scraped_df
             st.rerun()
+
