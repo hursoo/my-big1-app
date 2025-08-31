@@ -1,4 +1,0 @@
-recursive-include src *.c *.cpp *.h *.hpp
-recursive-include include *
-recursive-include tomotopy *.py *.rst *.html
-include LICENSE.txt

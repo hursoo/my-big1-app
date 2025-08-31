@@ -192,6 +192,7 @@ gb_111_topic_network(big1).ipynb"
         #st.subheader("📚 자료 및 Q&A")
         #st.info("이곳에 강의 자료 및 Q&A 내용이 들어갈 예정입니다.")
         st.markdown("""
+        - <a href="https://drive.google.com/drive/folders/1yvLdVpOkMHHlNg7CDvHvnxmo14XjF7zZ?usp=sharing">공유 구글드라이브 주소: big_km_history01</a>
         - <a href="https://github.com/hursoo/big_k-modern_1/tree/main">교수자 깃헙 주소: big_k-modern_1</a>
         - <a href="https://github.com/hursoo/big_k-modern_1/blob/main/data/gb_data_2.1.xlsx">개벽 주요논설 코퍼스: gb_data_2.1.xlsx</a>
         - <a href="https://github.com/hursoo/big_k-modern_1/blob/main/data/%EA%B7%BC%ED%98%84%EB%8C%80%EC%9E%A1%EC%A7%80%EC%9E%90%EB%A3%8C_20250315172708.txt">개벽 전체 기사 정보: 근현대잡지자료_20250315172708.txt</a>
