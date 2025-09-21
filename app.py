@@ -16,7 +16,7 @@ import io
 from components import header, web_scraper, text_preprocessor, data_merger, eda_viewer, feature_analyzer, topic_analyzer
 
 # --- 1. 페이지 설정 및 세션 상태 초기화 ---
-st.set_page_config(layout="wide", page_title="빅데이터 한국근대사 분석")
+st.set_page_config(layout="wide", page_title="빅데이터로 읽는 한국근대사1")
 
 # 모든 세션 상태 변수들을 앱 실행 시점에 한번만 초기화
 if 'main_nav' not in st.session_state: st.session_state.main_nav = "0. 강의 소개"
@@ -221,42 +221,35 @@ gb_111_topic_network(big1).ipynb"
         - <a href="https://forms.gle/wHNzVuQGJ3mXbLrP8">수강 전 설문조사</a>
         """, unsafe_allow_html=True)
 
-        
 
 # [메뉴 1] 연구질문과 자료가공
 elif st.session_state.main_nav == "[1] 연구질문과 자료가공":
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "[1단계] 웹 스크래핑", 
         "[2단계] 텍스트 전처리", 
-        "[3단계] 범용 데이터 도구", 
-        "[4단계] 텍스트의 특성",
-        "[5단계] 개벽 토픽 추출"
+        "[3단계] 분석용 데이터 형성", 
     ])
     with tab1:
         web_scraper.show()
     with tab2:
-        st.header("텍스트 전처리")
-        uploaded_file_for_preproc = st.file_uploader("전처리할 엑셀 파일을 업로드하세요 (**5개 기사로 된 샘플 파일: ron10_data.xlsx**)", type=['xlsx', 'xls'], key="tab2_file_uploader")
+        st.header("텍스트 전처리 : gb_021_preprocess(big1).ipynb")
+        uploaded_file_for_preproc = st.file_uploader("전처리할 엑셀 파일 업로드(**10개 기사로 된 샘플 파일: ron10_data.xlsx**)", type=['xlsx', 'xls'], key="tab2_file_uploader")
         if uploaded_file_for_preproc:
             df_to_preprocess = pd.read_excel(uploaded_file_for_preproc)
             text_preprocessor.show(df_to_preprocess)
     with tab3:
-        st.header("범용 데이터 결합 및 탐색")
+        st.header("개벽 코퍼스 결합 및 탐색 : gb_031_make_2gram(big1).ipynb")
+        st.info("[input] gb_data_2.1.xlsx (sent, ron, ho, writer_new)")
+        st.info("[output] gb_data_2(doc,1g2g,wn_cls).xlsx")
         uploaded_file_tab3 = st.file_uploader("분석할 엑셀 파일", type=['xlsx','xls'], key="tab3_uploader")
         if uploaded_file_tab3:
             xls_object = pd.ExcelFile(uploaded_file_tab3)
             data_merger.show(xls_object)
             st.divider()
-            if 'final_df_for_analysis' in st.session_state and st.session_state.final_df_for_analysis is not None:
-                 eda_viewer.show(st.session_state.final_df_for_analysis)
+            #if 'final_df_for_analysis' in st.session_state and st.session_state.final_df_for_analysis is not None:
+            #     eda_viewer.show(st.session_state.final_df_for_analysis)
         else:
             st.info("이 도구를 사용하려면 위에서 엑셀 파일을 업로드해주세요.")
-    with tab4:
-        st.subheader("✨ [변경] 이 탭의 내용은 '특성 벡터와 토픽 추출' 메뉴로 이동했습니다.")
-        st.info("좌측 사이드바에서 '2. 특성 벡터와 토픽 추출' 메뉴를 선택해주세요.")
-    with tab5:
-        st.subheader("✨ [변경] 이 탭의 내용은 '특성 벡터와 토픽 추출' 메뉴로 이동했습니다.")
-        st.info("좌측 사이드바에서 '2. 특성 벡터와 토픽 추출' 메뉴를 선택해주세요.")
 
 # [메뉴 2] 특성 벡터와 토픽 추출
 elif st.session_state.main_nav == "[2] 특성 벡터와 토픽 추출":

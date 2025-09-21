@@ -52,15 +52,16 @@ def get_contents(urls, n):
     return pd.DataFrame(results, columns=['r_id', 'content'])
 
 def show():
-    st.header("자료 불러오기 및 스크래핑")
-    st.info("논설 정보 엑셀 파일과 기사 정보 텍스트 파일을 업로드하여 스크래핑을 시작하세요.")
+    st.header("자료 불러오기 및 스크래핑: gb_011_Scraping(big1).ipynb")
+    st.info("[input] gb_data_2.1.xlsx, 근현대잡지자료_20250315172708.txt")
+    st.info("[output] ron10_data.xlsx")
 
     col1, col2 = st.columns(2)
     ron_info_df = None
     gisa_info_df = None
 
     with col1:
-        excel_file = st.file_uploader("논설 정보(`ron_info` 시트 포함) 엑셀 파일", type=['xlsx', 'xls'], key="ws_excel_uploader")
+        excel_file = st.file_uploader("gb_data_2.1.xlsx(`ron_info` 시트 포함)", type=['xlsx', 'xls'], key="ws_excel_uploader")
         if excel_file:
             try:
                 xls = pd.ExcelFile(excel_file)
@@ -73,7 +74,7 @@ def show():
                 st.error(f"엑셀 파일 처리 중 오류: {e}")
 
     with col2:
-        gisa_file = st.file_uploader("기사 정보(`...txt`) 파일", type="txt", key="ws_gisa_uploader")
+        gisa_file = st.file_uploader("기사 정보파일(근현대잡지자료_20250315172708.txt)", type="txt", key="ws_gisa_uploader")
         if gisa_file:
             try:
                 gisa_info_df = pd.read_csv(gisa_file, sep='^', encoding='utf-8')
@@ -115,7 +116,7 @@ def show():
         st.download_button(
             "결과 다운로드 (Excel)",
             excel_data,
-            'scraped_data.xlsx',
+            'ron10_data.xlsx',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             key="ws_download_button"
         )
